@@ -3,6 +3,7 @@ package command
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -541,4 +542,28 @@ func (w *uiErrorWriter) Close() error {
 		w.buf.Reset()
 	}
 	return nil
+}
+
+func parseTaskName(ui cli.Ui, task string, alloc *api.Allocation, args []string) (string, error) {
+	var err error
+
+	if task != "" {
+		err = validateTaskExistsInAllocation(task, alloc)
+	} else {
+		if len(args) >= 2 {
+			task = args[1]
+			if task == "" {
+				ui.Error("Task name required")
+				err = errors.New("missing task name")
+			}
+		} else {
+			task, err = lookupAllocTask(alloc)
+		}
+	}
+
+	if err != nil {
+		ui.Error(fmt.Sprintf("Failed to validate task: %s", err))
+		return "", err
+	}
+	return task, nil
 }

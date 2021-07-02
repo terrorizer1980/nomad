@@ -34,6 +34,9 @@ Signal Specific Options:
   -s
     Specify the signal that the selected tasks should receive.
 
+  -task <task-name>
+	Specifies the task to receive the signal
+
   -verbose
     Show full information.
 `
@@ -44,12 +47,13 @@ func (c *AllocSignalCommand) Name() string { return "alloc signal" }
 
 func (c *AllocSignalCommand) Run(args []string) int {
 	var verbose bool
-	var signal string
+	var signal, task string
 
 	flags := c.Meta.FlagSet(c.Name(), FlagSetClient)
 	flags.Usage = func() { c.Ui.Output(c.Help()) }
 	flags.BoolVar(&verbose, "verbose", false, "")
 	flags.StringVar(&signal, "s", "SIGKILL", "")
+	flags.StringVar(&task, "task", "", "")
 
 	if err := flags.Parse(args); err != nil {
 		return 1
@@ -112,18 +116,14 @@ func (c *AllocSignalCommand) Run(args []string) int {
 		return 1
 	}
 
-	var taskName string
-	if len(args) == 2 {
-		// Validate Task
-		taskName = args[1]
-		err := validateTaskExistsInAllocation(taskName, alloc)
-		if err != nil {
-			c.Ui.Error(err.Error())
-			return 1
-		}
+	// If -task isn't provided fallback to reading the task name
+	// from args.
+	task, err = parseTaskName(c.Ui, task, alloc, args)
+	if err != nil {
+		return 1
 	}
 
-	err = client.Allocations().Signal(alloc, nil, taskName, signal)
+	err = client.Allocations().Signal(alloc, nil, task, signal)
 	if err != nil {
 		c.Ui.Error(fmt.Sprintf("Error signalling allocation: %s", err))
 		return 1

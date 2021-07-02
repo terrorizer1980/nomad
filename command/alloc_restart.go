@@ -31,6 +31,9 @@ General Options:
 
 Restart Specific Options:
 
+  -task <task-name>
+	Specifies the task to restart.
+
   -verbose
     Show full information.
 `
@@ -41,10 +44,12 @@ func (c *AllocRestartCommand) Name() string { return "alloc restart" }
 
 func (c *AllocRestartCommand) Run(args []string) int {
 	var verbose bool
+	var task string
 
 	flags := c.Meta.FlagSet(c.Name(), FlagSetClient)
 	flags.Usage = func() { c.Ui.Output(c.Help()) }
 	flags.BoolVar(&verbose, "verbose", false, "")
+	flags.StringVar(&task, "task", "", "")
 
 	if err := flags.Parse(args); err != nil {
 		return 1
@@ -107,18 +112,14 @@ func (c *AllocRestartCommand) Run(args []string) int {
 		return 1
 	}
 
-	var taskName string
-	if len(args) == 2 {
-		// Validate Task
-		taskName = args[1]
-		err := validateTaskExistsInAllocation(taskName, alloc)
-		if err != nil {
-			c.Ui.Error(err.Error())
-			return 1
-		}
+	// If -task isn't provided fallback to reading the task name
+	// from args.
+	task, err = parseTaskName(c.Ui, task, alloc, args)
+	if err != nil {
+		return 1
 	}
 
-	err = client.Allocations().Restart(alloc, taskName, nil)
+	err = client.Allocations().Restart(alloc, task, nil)
 	if err != nil {
 		c.Ui.Error(fmt.Sprintf("Failed to restart allocation:\n\n%s", err.Error()))
 		return 1

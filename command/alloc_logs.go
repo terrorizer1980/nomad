@@ -194,21 +194,8 @@ func (l *AllocLogsCommand) Run(args []string) int {
 
 	// If -task isn't provided fallback to reading the task name
 	// from args.
-	if task != "" {
-		err = validateTaskExistsInAllocation(task, alloc)
-	} else {
-		if len(args) >= 2 {
-			task = args[1]
-			if task == "" {
-				l.Ui.Error("Task name required")
-				return 1
-			}
-		} else {
-			task, err = lookupAllocTask(alloc)
-		}
-	}
+	task, err = parseTaskName(l.Ui, task, alloc, args)
 	if err != nil {
-		l.Ui.Error(fmt.Sprintf("Failed to validate task: %s", err))
 		return 1
 	}
 

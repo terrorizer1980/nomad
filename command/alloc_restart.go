@@ -32,7 +32,7 @@ General Options:
 Restart Specific Options:
 
   -task <task-name>
-	Specifies the task to restart.
+	Specify the individual task to restart.
 
   -verbose
     Show full information.

@@ -35,7 +35,7 @@ Signal Specific Options:
     Specify the signal that the selected tasks should receive.
 
   -task <task-name>
-	Specifies the task to receive the signal
+	Specify the individual task that will receive the signal
 
   -verbose
     Show full information.
